@@ -5,16 +5,24 @@
 
 CRGB leds[NUM_LEDS];
 
+uint16_t clamp_add(uint16_t a, int8_t b){
+  uint16_t result=a+b;
+  if(b>=0){
+    if(result<a)result=a;
+  }else{
+    if(result>a)result=0;
+  }
+  return result; 
+}
 
 struct NoiseGen{
   uint16_t v;
   int8_t d;
-  void update(int speed){
+  void update(int speed, int speed2=1){
     d=d+random(speed*2+1)-speed;    
     if(v>65535-127)v=65535-128; else
-    if(v<128)v=128;
     if(d==-128)d=-127;
-    v=v+d;
+    v=clamp_add(v, d*speed2);
   }
 };
 
@@ -22,14 +30,14 @@ struct Fire{
   NoiseGen noise0;
   NoiseGen noise1;
   uint8_t get(){
-    noise0.update(40);
-    noise1.update(50);
+    noise0.update(10,4);
+    noise1.update(10,4);
     return (noise0.v>>9)+(noise1.v>>9);
   }
 };
 
 Fire fires[NUM_LEDS];
-CRGB light_color={255, 100, 50};
+CRGB light_color={255, 100, 25};
 
 // house light on/off
 int16_t lights[(NUM_LEDS+15)/16];// bit set if the light is off
@@ -75,7 +83,7 @@ void setup() {
   read_from_eeprom();  
   // put your setup code here, to run once:
   FastLED.addLeds<WS2811, DATA_PIN>(leds, NUM_LEDS); 
-  Serial.begin(9600); 
+  //Serial.begin(9600); 
 }
 
 void interact(){
